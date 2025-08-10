@@ -1,0 +1,21 @@
+{
+  "name": "sern_auth",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "server:dev": "npm run dev --workspace packages/server"
+  },
+  "keywords": [],
+  "author": "Nizvan Monteón Ricárdez",
+  "license": "ISC",
+  "description": "Fullstack SERN sample authentication app",
+  "workspaces": [
+    "packages/client",
+    "packages/server"
+  ],
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  }
+}

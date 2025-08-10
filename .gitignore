@@ -1,9 +1,7 @@
 # Node modules
 /node_modules
-/client/node_modules
-/server/node_modules
 
 # Archivos .env
 .env
-/client/.env
-/server/.env
+packages/client/.env
+packages/server/.env
