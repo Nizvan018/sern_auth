@@ -6,9 +6,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import transporter from "@/config/nodemailer";
 
 /**
  * Register a new user in the database and create a JWT
+ * After registration, send welcome email to the user
  * 
  * @param {Request} req 
  * @param {Response} res 
@@ -59,6 +61,18 @@ export const register = async (req: Request, res: Response) => {
             secure: process.env.NODE_ENV === "production",
             sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
             maxAge: 8 * 60 * 60 * 1000 // 8 hours
+        });
+
+        // Send welcome email:
+
+        await transporter.sendMail({
+            from: process.env.SENDER_EMAIL,
+            to: email,
+            subject: "Welcome to SERN sample authentication app",
+            text: `
+                Welcome to SERN sample authentication app.
+                Your account has been created with your ${email} email
+            `
         });
 
         return res.status(201).json({ message: "User registered successfully" });
