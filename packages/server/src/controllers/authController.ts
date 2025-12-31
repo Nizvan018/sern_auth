@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import transporter from "@/config/nodemailer";
+import crypto from "crypto";
 
 /**
  * Register a new user in the database and create a JWT
@@ -54,7 +55,8 @@ export const register = async (req: Request, res: Response) => {
         const token = jwt.sign(
             { id: newUser.id },
             process.env.JWT_SECRET!,
-            { expiresIn: "8h" });
+            { expiresIn: "8h" }
+        );
 
         res.cookie("token", token, {
             httpOnly: true,
@@ -156,5 +158,136 @@ export const logout = async (_req: Request, res: Response) => {
         return res.status(200).json({ message: "User logged out successfully" });
     } catch (error) {
         return res.status(500).json({ error: "An unexpected error has ocurred" });
+    }
+}
+
+/**
+ * Send OTP by email to verify the user's account
+ * 
+ * @param {Request} req 
+ * @param {Response} res 
+ * @returns Response with status 200 and a message indicating that the OTP was sent successfully
+ */
+export const sendVerifyOtp = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId;
+
+        // If user is not authorized
+        if (!userId) {
+            return res.status(401).json({ error: "Not authorized" });
+        }
+
+        // Get the user
+        const userFound = await db.select().from(user).where(eq(user.id, userId)).get();
+
+        // If the user doesn't exist
+        if (!userFound) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // If the user is already verified
+        if (userFound.isAccountVerified) {
+            return res.status(400).json({ error: "Account is already verified" });
+        }
+
+        // Rate limiting (check if OTP was sent recently)
+        if (userFound.verifyOtpExpiresAt && userFound.verifyOtpExpiresAt > Date.now()) {
+            return res.status(400).json({ error: "OTP already sent. Please wait before requesting a new one" })
+        }
+
+        // Generate a 6-digit OTP and set expiration time (10 minutes):
+
+        const otp = crypto.randomInt(100000, 1000000).toString();
+        const otpHash = crypto.createHash("sha256").update(otp).digest("hex"); // hash the OTP before storeing it in the database
+        const expireAt = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+
+        // Update the user
+        await db.update(user).set({
+            verifyOtp: otpHash,
+            verifyOtpExpiresAt: expireAt
+        }).where(eq(user.id, userId));
+
+        await transporter.sendMail({
+            from: process.env.SENDER_EMAIL,
+            to: userFound.email,
+            subject: "Account Verification OTP",
+            text: `
+                Your OTP is ${otp}.
+                Verify your account using this OTP. It will expire in 10 minutes.
+            `
+        });
+
+        return res.status(200).json({ message: "OTP sent successfully" });
+    } catch (error) {
+        return res.status(500).json({ error: "An unexpected error has ocurred during sending OTP verification" });
+    }
+}
+
+/**
+ * Verify user account using its OTP
+ * 
+ * @param {Request} req 
+ * @param {Response} res 
+ * @returns Response with status 200 and a message indicating that the user was verified successfully
+ */
+export const verifyEmail = async (req: Request, res: Response) => {
+    try {
+        const { otp } = req.body;
+        const userId = req.userId;
+
+        // If the data is not valid
+        if (!userId || !otp) {
+            return res.status(400).json({ error: "Missing data" });
+        }
+
+        // Get the user
+        const userFound = await db.select().from(user).where(eq(user.id, userId)).get();
+
+        // If the user doesn't exist
+        if (!userFound) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Verify OTP expiration
+        if (
+            !userFound.verifyOtpExpiresAt ||
+            userFound.verifyOtpExpiresAt < Date.now()
+        ) {
+            return res.status(400).json({ error: "OTP expired" });
+        }
+
+        // Verify OTP hash:
+
+        const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+        if (otpHash !== userFound.verifyOtp) {
+            return res.status(400).json({ error: "Invalid OTP" });
+        }
+
+        // Verify user account
+        await db.update(user).set({
+            isAccountVerified: true,
+            verifyOtp: null,
+            verifyOtpExpiresAt: null
+        }).where(eq(user.id, userId));
+
+        return res.status(200).json({ message: "Account verified successfully" });
+    } catch (error) {
+        return res.status(500).json({ error: "An unexpected error has ocurred during email verification" });
+    }
+}
+
+/**
+ * Verify if an user is authenticated
+ * 
+ * @param {Request} req 
+ * @param {Response} res 
+ * @returns Response with status 200 and a message indicating that the user is authenticated
+ */
+export const isAuthenticated = async (req: Request, res: Response) => {
+    try {
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        return res.status(500).json({ error: "An unexpected error has ocurred during verification" });
     }
 }
