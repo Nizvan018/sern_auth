@@ -6,7 +6,7 @@
     "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Nizvan Monteón Ricárdez",
+  "author": "Nizvan Monteon Ricardez",
   "license": "ISC",
   "description": "Backend for SERN sample authentication app",
   "dependencies": {

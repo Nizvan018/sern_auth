@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "server:dev": "npm run dev --workspace packages/server"
+    "server:dev": "npm run dev --workspace packages/server",
+    "client:dev": "npm run dev --workspace packages/client"
   },
   "keywords": [],
   "author": "Nizvan Monteón Ricárdez",
