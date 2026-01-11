@@ -291,3 +291,115 @@ export const isAuthenticated = async (req: Request, res: Response) => {
         return res.status(500).json({ error: "An unexpected error has ocurred during verification" });
     }
 }
+
+/**
+ * Send reset password OTP by email
+ * 
+ * @param {Request} req 
+ * @param {Response} res 
+ * @returns Response with status 200 and a message indicating that the reset OTP was sent successfully
+ */
+export const sendResetOTP = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+
+        // If the email doesn't exist
+        if (!email) {
+            return res.status(400).json({ error: "Email is required" });
+        }
+
+        // Get the user
+        const userData = await db.select()
+            .from(user)
+            .where(eq(user.email, email))
+            .get();
+
+        // If the user doesn't exist
+        if (!userData) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Generate a 6-digit OTP and set expiration time (10 minutes):
+
+        const otp = crypto.randomInt(100000, 1000000).toString();
+        const otpHash = crypto.createHash("sha256").update(otp).digest("hex"); // hash the OTP before storeing it in the database
+        const expireAt = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+
+        // Update reset OTP and its expiration of the user
+        await db.update(user).set({
+            resetOtp: otpHash,
+            resetOtpExpiresAt: expireAt
+        }).where(eq(user.id, userData.id));
+
+        // Send the reset OTP to the user's email
+        await transporter.sendMail({
+            from: process.env.SENDER_EMAIL,
+            to: userData.email,
+            subject: "Password Reset OTP",
+            text: `Your OTP for resetting your password is ${otp}. It will expire in 10 minutes.`
+        });
+
+        return res.status(200).json({ message: "Reset OTP sent successfully" });
+    } catch (error) {
+        return res.status(500).json({ error: "An unexpected error has ocurred during sending reset OTP" });
+    }
+}
+
+/**
+ * Reset user's password using OTP
+ * 
+ * @param {Request} req 
+ * @param {Response} res 
+ * @returns Response with status 200 and a message indicating that the user's password was reset successfully
+ */
+export const resetPassword = async (req: Request, res: Response) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        // Verify if the data exists
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ error: "Missing data" });
+        }
+
+        // Get the user
+        const userData = await db.select()
+            .from(user)
+            .where(eq(user.email, email))
+            .get();
+
+        // Verify if the user exists
+        if (!userData) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Verify OTP expiration
+        if (
+            !userData.resetOtpExpiresAt ||
+            userData.resetOtpExpiresAt < Date.now()
+        ) {
+            return res.status(400).json({ error: "OTP expired" });
+        }
+
+        // Verify OTP hash:
+
+        const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
+
+        if (otpHash !== userData.resetOtp) {
+            return res.status(400).json({ error: "Invalid OTP" });
+        }
+
+        // Reset the user's password:
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await db.update(user).set({
+            password: hashedPassword,
+            resetOtp: null,
+            resetOtpExpiresAt: null
+        }).where(eq(user.id, userData.id));
+
+        return res.status(200).json({ message: "Password reset successfully" });
+    } catch (error) {
+        return res.status(500).json({ error: "An unexpected error has ocurred during resetting password" });
+    }
+}
