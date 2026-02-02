@@ -40,7 +40,7 @@ export default function Login() {
                 return;
             }
 
-            navigate("/");
+            navigate("/user_profile");
         } catch (error) {
             console.log(error);
             setError("An unexpected error has ocurred while login");
