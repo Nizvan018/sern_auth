@@ -77,7 +77,11 @@ export const register = async (req: Request, res: Response) => {
             `
         });
 
-        return res.status(201).json({ message: "User registered successfully" });
+        return res.status(201).json({
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email
+        });
     } catch (error) {
         return res.status(500).json({ error: "An unexpected error has ocurred" });
     }
@@ -133,7 +137,11 @@ export const login = async (req: Request, res: Response) => {
             maxAge: 8 * 60 * 60 * 1000 // 8 hours
         });
 
-        return res.status(200).json({ message: "User logged in successfully" });
+        return res.status(200).json({
+            id: userData.id,
+            name: userData.name,
+            email: userData.email
+        });
     } catch (error) {
         return res.status(500).json({ error: "An unexpected error has ocurred" });
     }
@@ -286,7 +294,26 @@ export const verifyEmail = async (req: Request, res: Response) => {
  */
 export const isAuthenticated = async (req: Request, res: Response) => {
     try {
-        return res.status(200).json({ success: true });
+        const userId = req.userId;
+
+        if (!userId) {
+            return res.status(401).json({ error: "Not authorized" });
+        }
+
+        const userData = await db.select({
+            id: user.id,
+            name: user.name,
+            email: user.email
+        })
+            .from(user)
+            .where(eq(user.id, userId))
+            .get();
+
+        if (!userData) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        return res.status(200).json(userData);
     } catch (error) {
         return res.status(500).json({ error: "An unexpected error has ocurred during verification" });
     }
