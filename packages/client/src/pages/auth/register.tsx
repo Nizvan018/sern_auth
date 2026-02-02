@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import CustomInput from "../../components/CustomInput";
 import { registerFormSchema, type RegisterForm } from "../../schemas/registerForm.schema";
+import axios from "axios";
+import { useAuth } from "@/context/auth.context";
 
 /**
  * Page for user registration
@@ -10,6 +12,7 @@ import { registerFormSchema, type RegisterForm } from "../../schemas/registerFor
  * @returns JSX.Element
  */
 export default function Register() {
+    const { BACKEND_URL, setIsAuth } = useAuth();
     const { control, handleSubmit, formState: { errors } } = useForm({
         resolver: zodResolver(registerFormSchema),
         defaultValues: {
@@ -18,10 +21,30 @@ export default function Register() {
             password: ""
         }
     });
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Send data to create user
-    const submit = (data: RegisterForm) => {
-        console.log(data);
+    const submit = async (data: RegisterForm) => {
+        try {
+            setIsLoading(true);
+
+            axios.defaults.withCredentials = true;
+
+            const res = await axios.post(BACKEND_URL + "/api/auth/register", data);
+
+            if (res.status !== 201) {
+                setError(res.data.error);
+                return;
+            }
+
+            setIsAuth(true);
+        } catch (error) {
+            console.log(error);
+            setError("An unexpected error has ocurred while register user");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

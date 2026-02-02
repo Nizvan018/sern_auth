@@ -4,6 +4,7 @@ import Login from "./pages/auth/login";
 import EmailVerify from "./pages/emailVerify";
 import ResetPassword from "./pages/resetPassword";
 import Navbar from "./components/Navbar";
+import { AuthProvider } from "./context/auth.provider";
 
 import "@fontsource-variable/rubik";
 import Register from "./pages/auth/register";
@@ -11,14 +12,16 @@ import Register from "./pages/auth/register";
 function App() {
 	return (
 		<BrowserRouter>
-			<Navbar />
-			<Routes>
-				<Route path="/" element={<Home />} />
-				<Route path="/login" element={<Login />} />
-				<Route path="/register" element={<Register />} />
-				<Route path="/email_verify" element={<EmailVerify />} />
-				<Route path="/reset_password" element={<ResetPassword />} />
-			</Routes>
+			<AuthProvider>
+				<Navbar />
+				<Routes>
+					<Route path="/" element={<Home />} />
+					<Route path="/login" element={<Login />} />
+					<Route path="/register" element={<Register />} />
+					<Route path="/email_verify" element={<EmailVerify />} />
+					<Route path="/reset_password" element={<ResetPassword />} />
+				</Routes>
+			</AuthProvider>
 		</BrowserRouter>
 	)
 }
