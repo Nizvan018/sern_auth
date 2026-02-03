@@ -3,8 +3,11 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import CustomInput from "../../components/CustomInput";
 import { registerFormSchema, type RegisterForm } from "../../schemas/registerForm.schema";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth.context";
+import { useState } from "react";
+import { LoaderCircle } from "lucide-react";
+import ErrorIndicator from "@/components/ErrorIndicator";
 
 /**
  * Page for user registration
@@ -12,13 +15,15 @@ import { useAuth } from "@/context/auth.context";
  * @returns JSX.Element
  */
 export default function Register() {
-    const { BACKEND_URL, setIsAuth } = useAuth();
+    const { register } = useAuth();
+    const navigate = useNavigate();
     const { control, handleSubmit, formState: { errors } } = useForm({
         resolver: zodResolver(registerFormSchema),
         defaultValues: {
             name: "",
             email: "",
-            password: ""
+            password: "",
+            confirmPassword: ""
         }
     });
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -28,19 +33,19 @@ export default function Register() {
     const submit = async (data: RegisterForm) => {
         try {
             setIsLoading(true);
+            setError(null);
 
-            axios.defaults.withCredentials = true;
+            const { success, error } = await register(data);
 
-            const res = await axios.post(BACKEND_URL + "/api/auth/register", data);
-
-            if (res.status !== 201) {
-                setError(res.data.error);
+            if (!success) {
+                console.error(error);
+                setError(error.message);
                 return;
             }
 
-            setIsAuth(true);
+            navigate("/user_profile");
         } catch (error) {
-            console.log(error);
+            console.error(error);
             setError("An unexpected error has ocurred while register user");
         } finally {
             setIsLoading(false);
@@ -84,13 +89,34 @@ export default function Register() {
                         error={errors.password}
                     />
 
+                    <CustomInput
+                        control={control}
+                        name="confirmPassword"
+                        type="password"
+                        placeholder="Confirm password"
+                        className="w-96"
+                        error={errors.confirmPassword}
+                    />
+
                     <button
                         type="submit"
-                        className="w-full text-zinc-800 font-medium mt-6 py-3 px-4 rounded-lg bg-white cursor-pointer transition hover:bg-zinc-100"
+                        disabled={isLoading}
+                        className="disabled:opacity-80 flex justify-center items-center gap-2 w-full text-zinc-800 font-medium mt-6 py-3 px-4 rounded-lg bg-white cursor-pointer transition hover:bg-zinc-100"
                     >
-                        Register
+                        {isLoading ? (
+                            <>
+                                <span>Loading</span>
+                                <LoaderCircle className="animate-spin" />
+                            </>
+                        ) : (
+                            <span>Register</span>
+                        )}
                     </button>
                 </form>
+
+                {error && (
+                    <ErrorIndicator error={error} />
+                )}
 
                 <Link
                     to="/login"

@@ -35,14 +35,14 @@ export default function Login() {
             const { success, error } = await login(data);
 
             if (!success) {
-                console.log(error);
+                console.error(error);
                 setError(error.message);
                 return;
             }
 
             navigate("/user_profile");
         } catch (error) {
-            console.log(error);
+            console.error(error);
             setError("An unexpected error has ocurred while login");
         } finally {
             setIsLoading(false);

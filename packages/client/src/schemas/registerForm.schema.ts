@@ -10,7 +10,13 @@ export const registerFormSchema = z.object({
     password: z.string()
         .min(1, "The password is required")
         .min(8, "At least 8 characters")
-        .max(50, "The password is too long")
-});
+        .max(50, "The password is too long"),
+    confirmPassword: z.string()
+        .min(1, "Confirm password required")
+})
+    .refine(data => data.password === data.confirmPassword, {
+        error: "Passwords don't match",
+        path: ["confirmPassword"]
+    });
 
 export type RegisterForm = z.infer<typeof registerFormSchema>;
