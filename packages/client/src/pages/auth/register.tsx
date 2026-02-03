@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import CustomInput from "../../components/CustomInput";
 import { registerFormSchema, type RegisterForm } from "../../schemas/registerForm.schema";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +15,7 @@ import ErrorIndicator from "@/components/ErrorIndicator";
  * @returns JSX.Element
  */
 export default function Register() {
-    const { register } = useAuth();
+    const { register, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const { control, handleSubmit, formState: { errors } } = useForm({
         resolver: zodResolver(registerFormSchema),
@@ -43,7 +43,9 @@ export default function Register() {
                 return;
             }
 
-            navigate("/user_profile");
+            navigate("/user_profile", {
+                replace: true
+            });
         } catch (error) {
             console.error(error);
             setError("An unexpected error has ocurred while register user");
@@ -51,6 +53,8 @@ export default function Register() {
             setIsLoading(false);
         }
     };
+
+    if (isAuthenticated) return <Navigate to="/" replace />
 
     return (
         <main className="flex justify-center items-center w-full h-[calc(100vh-96px)] mt-24 px-6">

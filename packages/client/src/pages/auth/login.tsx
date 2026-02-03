@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { loginFormSchema, type LoginForm } from "../../schemas/loginForm.schema";
 import CustomInput from "../../components/CustomInput";
 import { useState } from "react";
@@ -14,7 +14,7 @@ import ErrorIndicator from "@/components/ErrorIndicator";
  * @returns JSX.Element
  */
 export default function Login() {
-    const { login } = useAuth();
+    const { login, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const { control, handleSubmit, formState: { errors } } = useForm({
         resolver: zodResolver(loginFormSchema),
@@ -40,7 +40,9 @@ export default function Login() {
                 return;
             }
 
-            navigate("/user_profile");
+            navigate("/user_profile", {
+                replace: true
+            });
         } catch (error) {
             console.error(error);
             setError("An unexpected error has ocurred while login");
@@ -48,6 +50,8 @@ export default function Login() {
             setIsLoading(false);
         }
     };
+
+    if (isAuthenticated) return <Navigate to="/" replace />
 
     return (
         <main className="flex flex-col justify-center items-center w-full h-[calc(100vh-96px)] mt-24 px-6">
