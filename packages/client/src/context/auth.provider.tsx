@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AuthContext } from "./auth.context";
 import type { AuthResponse, Session } from "@/types/Session";
 import { authService } from "@/services/authService";
@@ -24,11 +24,32 @@ export const AuthProvider = ({ children }: Props) => {
     const isAuthenticated = !!session;
 
     // Check if the user is authenticated and set the session
-    const checkAuth = async () => {
+    const checkAuth = useCallback(async (): Promise<AuthResponse> => {
         try {
             setIsLoading(true);
 
-            const session = await authService.isAuthenticated();
+            await authService.isAuthenticated();
+
+            return { success: true, error: null }
+        } catch (error) {
+            setSession(null);
+
+            if (error instanceof APIError) {
+                return { success: false, error }
+            }
+
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // Check if the user is authenticated and set the session
+    const getSession = useCallback(async (): Promise<AuthResponse> => {
+        try {
+            setIsLoading(true);
+
+            const session = await authService.getSession();
 
             setSession(session);
 
@@ -44,10 +65,10 @@ export const AuthProvider = ({ children }: Props) => {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, []);
 
     // Log in the user and set the session
-    const login = async (data: LoginForm): Promise<AuthResponse> => {
+    const login = useCallback(async (data: LoginForm): Promise<AuthResponse> => {
         try {
             setIsLoading(true);
 
@@ -67,10 +88,10 @@ export const AuthProvider = ({ children }: Props) => {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, []);
 
     // Register an user and set the session
-    const register = async (data: RegisterForm): Promise<AuthResponse> => {
+    const register = useCallback(async (data: RegisterForm): Promise<AuthResponse> => {
         try {
             setIsLoading(true);
 
@@ -90,10 +111,10 @@ export const AuthProvider = ({ children }: Props) => {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, []);
 
     // Log out the user and remove the session
-    const logout = async (): Promise<AuthResponse> => {
+    const logout = useCallback(async (): Promise<AuthResponse> => {
         try {
             setIsLoading(true);
 
@@ -113,17 +134,18 @@ export const AuthProvider = ({ children }: Props) => {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, []);
 
     useEffect(() => {
-        checkAuth();
-    }, []);
+        getSession();
+    }, [getSession]);
 
     return (
         <AuthContext.Provider value={{
             session,
             isLoading,
             isAuthenticated,
+            checkAuth,
             login,
             register,
             logout

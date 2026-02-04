@@ -102,6 +102,10 @@ export default function Register() {
                         error={errors.confirmPassword}
                     />
 
+                    {error && (
+                        <ErrorIndicator error={error} />
+                    )}
+
                     <button
                         type="submit"
                         disabled={isLoading}
@@ -117,10 +121,6 @@ export default function Register() {
                         )}
                     </button>
                 </form>
-
-                {error && (
-                    <ErrorIndicator error={error} />
-                )}
 
                 <Link
                     to="/login"

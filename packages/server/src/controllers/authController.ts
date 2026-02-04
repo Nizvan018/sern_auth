@@ -286,13 +286,13 @@ export const verifyEmail = async (req: Request, res: Response) => {
 }
 
 /**
- * Verify if an user is authenticated
+ * Verify if an user is authenticated and return the session
  * 
  * @param {Request} req 
  * @param {Response} res 
- * @returns Response with status 200 and a message indicating that the user is authenticated
+ * @returns Response with status 200 and the user session
  */
-export const isAuthenticated = async (req: Request, res: Response) => {
+export const getSession = async (req: Request, res: Response) => {
     try {
         const userId = req.userId;
 
@@ -314,6 +314,21 @@ export const isAuthenticated = async (req: Request, res: Response) => {
         }
 
         return res.status(200).json(userData);
+    } catch (error) {
+        return res.status(500).json({ error: "An unexpected error has ocurred during verification" });
+    }
+}
+
+/**
+ * Verify if an user is authenticated
+ * 
+ * @param {Request} _req 
+ * @param {Response} res 
+ * @returns Response with status 200 and a message indicating that the user is authenticated
+ */
+export const isAuthenticated = async (_req: Request, res: Response) => {
+    try {
+        return res.status(200).json({ message: "success" });
     } catch (error) {
         return res.status(500).json({ error: "An unexpected error has ocurred during verification" });
     }

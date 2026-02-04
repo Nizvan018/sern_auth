@@ -9,6 +9,7 @@ interface AuthContextType {
     session: Session | null;
     isLoading: boolean;
     isAuthenticated: boolean;
+    checkAuth: () => Promise<AuthResponse>;
     login: (data: LoginForm) => Promise<AuthResponse>;
     register: (data: RegisterForm) => Promise<AuthResponse>;
     logout: () => Promise<AuthResponse>;

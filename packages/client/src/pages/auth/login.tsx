@@ -90,6 +90,10 @@ export default function Login() {
                         </Link>
                     </div>
 
+                    {error && (
+                        <ErrorIndicator error={error} />
+                    )}
+
                     <button
                         type="submit"
                         disabled={isLoading}
@@ -105,10 +109,6 @@ export default function Login() {
                         )}
                     </button>
                 </form>
-
-                {error && (
-                    <ErrorIndicator error={error} />
-                )}
 
                 <Link
                     to="/register"

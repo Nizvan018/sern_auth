@@ -7,6 +7,7 @@ import Navbar from "./components/Navbar";
 import { AuthProvider } from "./context/auth.provider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UserProfile from "./pages/protected/userProfile";
+import { Toaster } from "sonner";
 
 import "@fontsource-variable/rubik";
 import Register from "./pages/auth/register";
@@ -16,6 +17,13 @@ function App() {
 		<BrowserRouter>
 			<AuthProvider>
 				<Navbar />
+				<Toaster
+					richColors
+					visibleToasts={1}
+					theme="dark"
+					position="top-right"
+					offset={{ top: 96 }}
+				/>
 				<Routes>
 					<Route path="/" element={<Home />} />
 					<Route path="/login" element={<Login />} />

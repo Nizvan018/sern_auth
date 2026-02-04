@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/auth.context";
 import { LoaderCircle } from "lucide-react";
-import { Navigate, Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 /**
  * This component protects all the routes within it
@@ -8,7 +9,12 @@ import { Navigate, Outlet } from "react-router-dom";
  * @returns JSX.Element
  */
 export default function ProtectedRoute() {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { checkAuth, isAuthenticated, isLoading } = useAuth();
+    const location = useLocation();
+
+    useEffect(() => {
+        checkAuth();
+    }, [location.pathname, checkAuth]);
 
     if (isLoading) {
         return (

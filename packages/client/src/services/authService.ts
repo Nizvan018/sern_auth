@@ -63,12 +63,23 @@ export const authService = {
     },
 
     /**
+     * Verify if the user is authenticated
+     * 
+     * @returns AxiosResponse with success message
+     */
+    async isAuthenticated() {
+        const { data } = await api.post<{ message: string }>("/api/auth/is-auth");
+
+        return data;
+    },
+
+    /**
      * Verify if the user is authenticated and get the session
      * 
      * @returns AxiosResponse with the session info
      */
-    async isAuthenticated() {
-        const { data } = await api.post<Session>("/api/auth/is-auth");
+    async getSession() {
+        const { data } = await api.post<Session>("/api/auth/get-session");
 
         return data;
     }
